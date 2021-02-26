@@ -1,5 +1,6 @@
 package com.unn.distributedlock.core;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -8,4 +9,12 @@ import java.util.concurrent.locks.Lock;
  * @author yangjiyun
  */
 public interface RedisLock extends Lock {
+
+
+    /**
+     * Conditions are not supported
+     */
+    default Condition newCondition() {
+        throw new UnsupportedOperationException("Conditions are not supported");
+    }
 }

@@ -30,7 +30,10 @@ import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -80,11 +83,14 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
     private final RedisScript<Boolean> releaseLockScript;
 
+    private final RedisScript<Boolean> nbReleaseLockScript;
+
     private final long expireAfter;
 
     {
         this.obtainLockScript = new DefaultRedisScript<>(RedisLockScript.OBTAIN_LOCK_SCRIPT, Boolean.class);
         this.releaseLockScript = new DefaultRedisScript<>(RedisLockScript.RELEASE_LOCK_SCRIPT, Boolean.class);
+        this.nbReleaseLockScript = new DefaultRedisScript<>(RedisLockScript.NB_RELEASE_LOCK_SCRIPT, Boolean.class);
     }
 
     /**
@@ -281,11 +287,17 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          * 释放锁
          */
         private boolean releaseLock() {
-            Boolean success =
-                    RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.releaseLockScript,
-                            Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId,
-                            String.valueOf(RedisLockRegistry.this.expireAfter));
+            Boolean success = RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.releaseLockScript,
+                    Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId);
+            return Boolean.TRUE.equals(success);
+        }
 
+        /**
+         * 非阻塞释放锁
+         */
+        private boolean nbReleaseLock() {
+            Boolean success = RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.releaseLockScript,
+                    Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId);
             return Boolean.TRUE.equals(success);
         }
 
@@ -323,31 +335,22 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         private void removeLockKey() {
             if (this.unlinkAvailable) {
                 try {
-                    RedisLockRegistry.this.redisTemplate.unlink(this.lockKey);
+                    nbReleaseLock();
                 } catch (Exception ex) {
                     log.warn("The UNLINK command has failed (not supported on the Redis server?); " +
                             "falling back to the regular DELETE command", ex);
                     this.unlinkAvailable = false;
-                    RedisLockRegistry.this.redisTemplate.delete(this.lockKey);
+                    releaseLock();
                 }
             } else {
-                RedisLockRegistry.this.redisTemplate.delete(this.lockKey);
+                releaseLock();
             }
         }
 
-        @Override
-        public Condition newCondition() {
-            throw new UnsupportedOperationException("Conditions are not supported");
-        }
 
-		public boolean isAcquiredInThisProcess() {
-			return RedisLockRegistry.this.clientId.equals(
-					RedisLockRegistry.this.redisTemplate.boundValueOps(this.lockKey).get());
-		}
-
-
-        private RedisLockRegistry getOuterType() {
-            return RedisLockRegistry.this;
+        public boolean isAcquiredInThisProcess() {
+            return RedisLockRegistry.this.clientId.equals(
+                    RedisLockRegistry.this.redisTemplate.boundValueOps(this.lockKey).get());
         }
 
     }

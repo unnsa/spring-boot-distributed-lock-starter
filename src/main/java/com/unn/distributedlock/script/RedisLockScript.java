@@ -31,4 +31,15 @@ public @interface RedisLockScript {
                     "  return true\n" +
                     "end\n" +
                     "return false";
+
+    /**
+     * 非阻塞释放锁
+     */
+    String NB_RELEASE_LOCK_SCRIPT =
+            "local lockClientId = redis.call('GET', KEYS[1])\n" +
+                    "if lockClientId == ARGV[1] then\n" +
+                    "  redis.call('UNLINK', KEYS[1])\n" +
+                    "  return true\n" +
+                    "end\n" +
+                    "return false";
 }
