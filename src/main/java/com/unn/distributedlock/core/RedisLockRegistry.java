@@ -60,6 +60,8 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
     private final long expireAfter;
 
+    private final TimeUnit timeUtil;
+
     {
         this.obtainLockScript = new DefaultRedisScript<>(RedisLockScript.OBTAIN_LOCK_SCRIPT, Boolean.class);
         this.releaseLockScript = new DefaultRedisScript<>(RedisLockScript.RELEASE_LOCK_SCRIPT, Boolean.class);
@@ -86,7 +88,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param registryKey       The key prefix for locks.
      */
     public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
-        this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER);
+        this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER,TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -94,14 +96,16 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      *
      * @param connectionFactory The connection factory.
      * @param registryKey       The key prefix for locks.
-     * @param expireAfter       The expiration in milliseconds.
+     * @param expireAfter       The expiration.
+     * @param timeUtil          The expiration time unit
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter) {
+    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
         this.registryKey = registryKey;
         this.expireAfter = expireAfter;
+        this.timeUtil = timeUtil;
     }
 
     /**
@@ -256,7 +260,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
             Boolean success =
                     redisTemplate.execute(obtainLockScript,
                             Collections.singletonList(this.lockKey), clientId,
-                            String.valueOf(expireAfter));
+                            String.valueOf(timeUtil.toMillis(expireAfter)));
 
             boolean result = Boolean.TRUE.equals(success);
 

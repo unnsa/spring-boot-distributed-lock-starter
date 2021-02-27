@@ -60,7 +60,7 @@ public class RedisLockAspect {
     private Lock getLock(JoinPoint joinPoint, DistributedLock distributedLock) {
         return Optional.ofNullable(redisLockRegistryMap.get(distributedLock.name()))
                 .orElseGet(() -> {
-                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime());
+                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime(),distributedLock.timeUnit());
                     redisLockRegistryMap.put(distributedLock.name(), redisLockRegistry);
                     return redisLockRegistry;
                 })
