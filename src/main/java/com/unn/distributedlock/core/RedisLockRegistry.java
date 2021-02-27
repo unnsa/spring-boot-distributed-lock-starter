@@ -35,35 +35,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Implementation of {@link ExpirableLockRegistry} providing a distributed lock using Redis.
- * Locks are stored under the key {@code registryKey:lockKey}. Locks expire after
- * (default 60) seconds. Threads unlocking an
- * expired lock will get an {@link IllegalStateException}. This should be
- * considered as a critical error because it is possible the protected
- * resources were compromised.
- * <p>
- * Locks are reentrant.
- * <p>
- * <b>However, locks are scoped by the registry; a lock from a different registry with the
- * same key (even if the registry uses the same 'registryKey') are different
- * locks, and the second cannot be acquired by the same thread while the first is
- * locked.</b>
- * <p>
- * <b>Note: This is not intended for low latency applications.</b> It is intended
- * for resource locking across multiple JVMs.
- * <p>
- * {@link Condition}s are not supported.
- *
- * @author Gary Russell
- * @author Konstantin Yakimov
- * @author Artem Bilan
- * @author Vedran Pavic
- * @since 4.0
+ * 可重入分布式锁
  */
 @Slf4j
 public final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
@@ -136,7 +112,6 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * cached thread pool Executor will be used.
      *
      * @param executor the executor service
-     * @since 5.0.5
      */
     public void setExecutor(Executor executor) {
         this.executor = executor;
@@ -296,7 +271,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          * 非阻塞释放锁
          */
         private boolean nbReleaseLock() {
-            Boolean success = RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.releaseLockScript,
+            Boolean success = RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.nbReleaseLockScript,
                     Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId);
             return Boolean.TRUE.equals(success);
         }
