@@ -118,13 +118,24 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         this.executorExplicitlySet = true;
     }
 
+    /**
+     * Obtains the lock associated with the parameter object.
+     *
+     * @param lockKey The object with which the lock is associated.
+     * @return The associated lock.
+     */
     @Override
     public Lock obtain(Object lockKey) {
         Assert.isInstanceOf(String.class, lockKey);
-        String path = (String) lockKey;
-        return this.locks.computeIfAbsent(path, DefaultRedisLock::new);
+        return this.locks.computeIfAbsent((String) lockKey, DefaultRedisLock::new);
     }
 
+    /**
+     * Remove locks last acquired more than 'age' ago that are not currently locked.
+     *
+     * @param age the time since the lock was last obtained.
+     * @throws IllegalStateException if the registry configuration does not support this feature.
+     */
     @Override
     public void expireUnusedOlderThan(long age) {
         Iterator<Map.Entry<String, DefaultRedisLock>> iterator = this.locks.entrySet().iterator();
