@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 在方法上标注，表示进入该方法需要获取redis分布式锁，
  * 如果获取失败将阻塞不断重试获取锁，直到获取倒锁为止
+ *
  * @author yangjiyun
  */
 @Target(value = {ElementType.METHOD})
@@ -33,7 +34,18 @@ public @interface DistributedLock {
      * 过期时间单位
      * 默认毫秒
      */
-    TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
+    TimeUnit expiredTimeUnit() default TimeUnit.MILLISECONDS;
 
+    /**
+     * 获取锁时的等待时间，超时不再尝试获取
+     * 小于等于0时会一直阻塞重试，直到获取到锁
+     */
+    long waitTime() default -1;
+
+    /**
+     * 过期时间单位
+     * 默认毫秒
+     */
+    TimeUnit waitTimeUnit() default TimeUnit.MILLISECONDS;
 
 }

@@ -4,6 +4,7 @@ import com.unn.distributedlock.annotation.DistributedLock;
 import com.unn.distributedlock.core.RedisLockRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -11,6 +12,7 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 
 /**
  * 分布式锁注解处理切面
@@ -37,7 +40,12 @@ public class RedisLockAspect {
     @Around(value = "@annotation(distributedLock)")
     public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
         Lock lock = getLock(distributedLock);
-        lock.lock();
+        var lockedOp = Optional.ofNullable(getLockOperate(distributedLock)
+                .apply(lock))
+                .filter(r -> r);
+        if (!lockedOp.isPresent()) {
+            throw new CannotAcquireLockException("Failed to lock mutex at " + distributedLock.key());
+        }
         log.debug("------加锁成功,开始处理业务逻辑------");
         Object proceed = joinPoint.proceed();
         lock.unlock();
@@ -60,12 +68,31 @@ public class RedisLockAspect {
     private Lock getLock(DistributedLock distributedLock) {
         return Optional.ofNullable(redisLockRegistryMap.get(distributedLock.name()))
                 .orElseGet(() -> {
-                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime(), distributedLock.timeUnit());
+                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
                     redisLockRegistryMap.put(distributedLock.name(), redisLockRegistry);
                     return redisLockRegistry;
                 })
                 .obtain(distributedLock.key());
     }
 
+    /**
+     * 获取获取锁的方式
+     * 等待时间大于0 用tryLock(long time, TimeUnit unit)，否则用lock()
+     */
+    private Function<Lock, Boolean> getLockOperate(DistributedLock distributedLock) {
+        if (distributedLock.waitTime() > 0) {
+            return lock -> {
+                try {
+                    return lock.tryLock(distributedLock.waitTime(), distributedLock.waitTimeUnit());
+                } catch (InterruptedException ignore) {
+                    return false;
+                }
+            };
+        }
+        return lock -> {
+            lock.lock();
+            return true;
+        };
+    }
 
 }
