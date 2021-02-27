@@ -36,7 +36,7 @@ public class RedisLockAspect {
 
     @Around(value = "@annotation(distributedLock)")
     public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
-        Lock lock = getLock(joinPoint, distributedLock);
+        Lock lock = getLock(distributedLock);
         lock.lock();
         log.debug("------加锁成功,开始处理业务逻辑------");
         Object proceed = joinPoint.proceed();
@@ -57,10 +57,10 @@ public class RedisLockAspect {
     /**
      * 获取锁
      */
-    private Lock getLock(JoinPoint joinPoint, DistributedLock distributedLock) {
+    private Lock getLock(DistributedLock distributedLock) {
         return Optional.ofNullable(redisLockRegistryMap.get(distributedLock.name()))
                 .orElseGet(() -> {
-                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime(),distributedLock.timeUnit());
+                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime(), distributedLock.timeUnit());
                     redisLockRegistryMap.put(distributedLock.name(), redisLockRegistry);
                     return redisLockRegistry;
                 })
