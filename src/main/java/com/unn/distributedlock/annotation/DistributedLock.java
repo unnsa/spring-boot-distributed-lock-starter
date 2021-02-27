@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 在方法上标注，表示进入该方法需要获取redis分布式锁，
+ * 如果获取失败将阻塞不断重试获取锁，直到获取倒锁为止
  * @author yangjiyun
  */
 @Target(value = {ElementType.METHOD})
