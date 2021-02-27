@@ -12,16 +12,19 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface DistributedLock {
     /**
-     * 锁的名称
-     *
-     * @return name
+     * 锁的名字
      */
-    String key() default "";
+    String name();
+
+    /**
+     * 锁的业务key
+     */
+    String key();
 
     /**
      * 锁的过期时间
      */
-    long expiredTime() default Long.MIN_VALUE;
+    long expiredTime();
 
 
 }

@@ -30,10 +30,7 @@ import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -232,7 +229,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         @Override
         public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
             long now = System.currentTimeMillis();
-            if (!this.localLock.tryLock(time, unit)) {
+            if (!localLock.tryLock(time, unit)) {
                 return false;
             }
             try {
@@ -257,9 +254,9 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          */
         private boolean obtainLock() {
             Boolean success =
-                    RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.obtainLockScript,
-                            Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId,
-                            String.valueOf(RedisLockRegistry.this.expireAfter));
+                    redisTemplate.execute(obtainLockScript,
+                            Collections.singletonList(this.lockKey), clientId,
+                            String.valueOf(expireAfter));
 
             boolean result = Boolean.TRUE.equals(success);
 
@@ -273,27 +270,29 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          * 释放锁
          */
         private boolean releaseLock() {
-            Boolean success = RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.releaseLockScript,
-                    Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId);
-            return Boolean.TRUE.equals(success);
+            return Optional.ofNullable(redisTemplate.execute(releaseLockScript,
+                    Collections.singletonList(this.lockKey), clientId))
+                    .filter(r -> r)
+                    .isPresent();
         }
 
         /**
          * 非阻塞释放锁
          */
         private boolean nbReleaseLock() {
-            Boolean success = RedisLockRegistry.this.redisTemplate.execute(RedisLockRegistry.this.nbReleaseLockScript,
-                    Collections.singletonList(this.lockKey), RedisLockRegistry.this.clientId);
-            return Boolean.TRUE.equals(success);
+            return Optional.ofNullable(redisTemplate.execute(nbReleaseLockScript,
+                    Collections.singletonList(this.lockKey), clientId))
+                    .filter(r -> r)
+                    .isPresent();
         }
 
         @Override
         public void unlock() {
-            if (!this.localLock.isHeldByCurrentThread()) {
+            if (!localLock.isHeldByCurrentThread()) {
                 throw new IllegalStateException("You do not own lock at " + this.lockKey);
             }
-            if (this.localLock.getHoldCount() > 1) {
-                this.localLock.unlock();
+            if (localLock.getHoldCount() > 1) {
+                localLock.unlock();
                 return;
             }
             try {
@@ -319,7 +318,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         }
 
         private void removeLockKey() {
-            if (this.unlinkAvailable) {
+            if (unlinkAvailable) {
                 try {
                     nbReleaseLock();
                 } catch (Exception ex) {
