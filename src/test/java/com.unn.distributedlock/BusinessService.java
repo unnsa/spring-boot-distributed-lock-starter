@@ -15,7 +15,7 @@ public class BusinessService {
         do {
             Thread.sleep(1000);
             System.out.println("第" + i + "秒");
-        } while (++i < 20);
+        } while (++i < 3);
         return "finish";
     }
 
