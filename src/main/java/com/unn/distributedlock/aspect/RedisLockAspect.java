@@ -72,7 +72,7 @@ public class RedisLockAspect {
                             distributedLock.name(),
                             distributedLock.expiredTime(),
                             distributedLock.expiredTimeUnit(),
-                            distributedLock.autoExtendTime());
+                            distributedLock.keepLease());
                     redisLockRegistryMap.put(distributedLock.name(), redisLockRegistry);
                     return redisLockRegistry;
                 })

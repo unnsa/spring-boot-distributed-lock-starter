@@ -47,7 +47,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     /**
      * 当方法耗时比较长的时候，为了防止锁过期，是否自动延长锁的过期时间
      */
-    private final boolean autoExtendTime;
+    private final boolean keepLease;
 
     private final TimeUnit timeUtil;
     /**
@@ -91,16 +91,16 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param registryKey       The key prefix for locks.
      * @param expireAfter       The expiration.
      * @param timeUtil          The expiration time unit
-     * @param autoExtendTime    true: extend time,false : no
+     * @param keepLease    true: extend time,false : no
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean autoExtendTime) {
+    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
         this.registryKey = registryKey;
         this.expireAfter = expireAfter;
         this.timeUtil = timeUtil;
-        this.autoExtendTime = autoExtendTime;
+        this.keepLease = keepLease;
     }
 
     /**
@@ -267,7 +267,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
         //TODO
         private void addExtendTimeTask(DefaultRedisLock defaultRedisLock){
-            if (autoExtendTime){
+            if (keepLease){
 
             }
         }
