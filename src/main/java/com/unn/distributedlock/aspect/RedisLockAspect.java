@@ -68,7 +68,11 @@ public class RedisLockAspect {
     private Lock getLock(DistributedLock distributedLock) {
         return Optional.ofNullable(redisLockRegistryMap.get(distributedLock.name()))
                 .orElseGet(() -> {
-                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory,
+                            distributedLock.name(),
+                            distributedLock.expiredTime(),
+                            distributedLock.expiredTimeUnit(),
+                            distributedLock.autoExtendTime());
                     redisLockRegistryMap.put(distributedLock.name(), redisLockRegistry);
                     return redisLockRegistry;
                 })

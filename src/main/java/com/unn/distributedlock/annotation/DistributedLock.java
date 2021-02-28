@@ -48,4 +48,10 @@ public @interface DistributedLock {
      */
     TimeUnit waitTimeUnit() default TimeUnit.MILLISECONDS;
 
+    /**
+     * 当方法耗时比较长的时候，为了防止锁过期，是否自动延长锁的过期时间
+     * true时自动续期
+     */
+    boolean autoExtendTime() default true;
+
 }

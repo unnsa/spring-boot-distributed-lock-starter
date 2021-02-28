@@ -1,19 +1,3 @@
-/*
- * Copyright 2014-2019 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.unn.distributedlock.core;
 
 import com.unn.distributedlock.script.RedisLockScript;
@@ -60,7 +44,16 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
     private final long expireAfter;
 
+    /**
+     * 当方法耗时比较长的时候，为了防止锁过期，是否自动延长锁的过期时间
+     */
+    private final boolean autoExtendTime;
+
     private final TimeUnit timeUtil;
+    /**
+     * 自动延长锁的过期时间线程池 TODO
+     */
+    private final ExecutorService autoExtendExecutor = Executors.newSingleThreadExecutor();
 
     {
         this.obtainLockScript = new DefaultRedisScript<>(RedisLockScript.OBTAIN_LOCK_SCRIPT, Boolean.class);
@@ -88,7 +81,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param registryKey       The key prefix for locks.
      */
     public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
-        this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER,TimeUnit.MILLISECONDS);
+        this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER, TimeUnit.MILLISECONDS, true);
     }
 
     /**
@@ -98,14 +91,16 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param registryKey       The key prefix for locks.
      * @param expireAfter       The expiration.
      * @param timeUtil          The expiration time unit
+     * @param autoExtendTime    true: extend time,false : no
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil) {
+    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean autoExtendTime) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
         this.registryKey = registryKey;
         this.expireAfter = expireAfter;
         this.timeUtil = timeUtil;
+        this.autoExtendTime = autoExtendTime;
     }
 
     /**
@@ -268,6 +263,13 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
                 this.lockedAt = System.currentTimeMillis();
             }
             return result;
+        }
+
+        //TODO
+        private void addExtendTimeTask(DefaultRedisLock defaultRedisLock){
+            if (autoExtendTime){
+
+            }
         }
 
         /**
