@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 可重入分布式锁
+ * @author yangjiyun
  */
 @Slf4j
 public final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
