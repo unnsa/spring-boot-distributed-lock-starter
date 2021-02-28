@@ -14,7 +14,7 @@ public class RedisLockTest {
 
 
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         try {
             System.out.println(businessService.doSomething());
         } catch (InterruptedException e) {

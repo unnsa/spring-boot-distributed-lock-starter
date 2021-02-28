@@ -50,10 +50,6 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     private final boolean keepLease;
 
     private final TimeUnit timeUtil;
-    /**
-     * 自动延长锁的过期时间线程池 TODO
-     */
-    private final ExecutorService autoExtendExecutor = Executors.newSingleThreadExecutor();
 
     {
         obtainLockScript = new DefaultRedisScript<>(RedisLockScript.OBTAIN_LOCK_SCRIPT, Boolean.class);
@@ -155,13 +151,28 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     @Data
     private final class DefaultRedisLock implements RedisLock {
 
+        /**
+         * 锁的key
+         */
         private final String lockKey;
 
         private final ReentrantLock localLock = new ReentrantLock();
-
+        /**
+         * redis是否支持UNLINK操作
+         */
         private volatile boolean unlinkAvailable = true;
-
+        /**
+         * 加锁时的时间戳
+         */
         private volatile long lockedAt;
+
+        /**
+         * 看门狗，用来锁的续租
+         */
+        private final ScheduledExecutorService watchdog = Executors.newSingleThreadScheduledExecutor();
+        private volatile ScheduledFuture<?> watchdogFuture;
+        private volatile boolean mayCancelIfRunning = false;
+        private volatile boolean watching = false;
 
         private DefaultRedisLock(String path) {
             this.lockKey = constructLockKey(path);
@@ -261,16 +272,18 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
             if (result) {
                 lockedAt = System.currentTimeMillis();
+                // schedule keeping lease
+                if (keepLease && !watching && watchdogFuture == null) {
+                    synchronized (this) {
+                        if (!watching && watchdogFuture == null) {
+                            watchdogFuture = scheduleKeepingLease();
+                        }
+                    }
+                }
             }
             return result;
         }
 
-        //TODO
-        private void addExtendTimeTask(DefaultRedisLock defaultRedisLock) {
-            if (keepLease) {
-
-            }
-        }
 
         /**
          * 释放锁
@@ -312,7 +325,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
                 } else {
                     releaseLock();
                 }
-
+                tryCancelScheduling();
                 if (log.isDebugEnabled()) {
                     log.debug("Released lock; " + this);
                 }
@@ -341,6 +354,36 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
         public boolean isAcquiredInThisProcess() {
             return clientId.equals(redisTemplate.boundValueOps(lockKey).get());
+        }
+
+        /**
+         * 锁续租调度器
+         */
+        private ScheduledFuture<?> scheduleKeepingLease() {
+            //精确到微秒级
+            long period = (timeUtil.toMillis(expireAfter) / 3) << 1;
+            return watchdog.scheduleAtFixedRate(() -> {
+                try {
+                    if (mayCancelIfRunning) {
+                        // last time fail to cancel
+                        tryCancelScheduling();
+                        return;
+                    }
+                    watching = true;
+                    obtainLock();
+                } catch (final Throwable t) {
+                    log.error("Fail to keeping lease with lock: {}.", lockKey);
+                    tryCancelScheduling();
+                }
+            }, period, period, TimeUnit.MILLISECONDS);
+        }
+
+        private void tryCancelScheduling() {
+            if (watching && watchdogFuture != null) {
+                mayCancelIfRunning = true;
+                watchdogFuture.cancel(true);
+                watching = false;
+            }
         }
 
     }
