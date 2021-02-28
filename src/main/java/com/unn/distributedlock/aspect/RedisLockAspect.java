@@ -2,17 +2,17 @@ package com.unn.distributedlock.aspect;
 
 import com.unn.distributedlock.annotation.DistributedLock;
 import com.unn.distributedlock.core.RedisLockRegistry;
+import com.unn.distributedlock.handler.AcquireLockExceptionHandler;
+import com.unn.distributedlock.handler.AcquireLockFailedHandler;
+import com.unn.distributedlock.handler.AfterUnlockSuccessHandler;
+import com.unn.distributedlock.handler.BeforeLockHandlerHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.AfterThrowing;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.*;
 import org.springframework.core.annotation.Order;
-import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +35,10 @@ import java.util.function.Function;
 public class RedisLockAspect {
     private final RedisConnectionFactory redisConnectionFactory;
     private final Map<String, RedisLockRegistry> redisLockRegistryMap = new ConcurrentHashMap<>();
+    private final AcquireLockFailedHandler acquireLockFailedHandler;
+    private final AcquireLockExceptionHandler acquireLockExceptionHandler;
+    private final AfterUnlockSuccessHandler afterUnlockSuccessHandler;
+    private final BeforeLockHandlerHandler beforeLockHandlerHandler;
 
 
     @Around(value = "@annotation(distributedLock)")
@@ -44,7 +48,9 @@ public class RedisLockAspect {
                 .apply(lock))
                 .filter(r -> r);
         if (!lockedOp.isPresent()) {
-            throw new CannotAcquireLockException("Failed to lock mutex at " + distributedLock.key());
+            log.info("Failed to lock mutex at " + distributedLock.key());
+            acquireLockFailedHandler.handler(joinPoint.getArgs());
+            return null;
         }
         log.debug("------加锁成功,开始处理业务逻辑------");
         Object proceed = joinPoint.proceed();
@@ -53,12 +59,19 @@ public class RedisLockAspect {
         return proceed;
     }
 
+    @Before(value = "@annotation(distributedLock)")
+    public void before(JoinPoint joinPoint, DistributedLock distributedLock) {
+        beforeLockHandlerHandler.handler(joinPoint.getArgs(), distributedLock);
+    }
+
     @AfterReturning(value = "@annotation(distributedLock)")
-    public void afterReturning(JoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
+    public void afterReturning(JoinPoint joinPoint, DistributedLock distributedLock) {
+        afterUnlockSuccessHandler.handler(joinPoint.getArgs(), distributedLock);
     }
 
     @AfterThrowing(value = "@annotation(distributedLock)", throwing = "ex")
-    public void afterThrowing(JoinPoint joinPoint, DistributedLock distributedLock, Throwable ex) throws Throwable {
+    public void afterThrowing(JoinPoint joinPoint, DistributedLock distributedLock, Throwable ex) {
+        acquireLockExceptionHandler.handler(joinPoint.getArgs(), ex, distributedLock);
     }
 
 

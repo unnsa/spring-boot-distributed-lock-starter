@@ -9,13 +9,13 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class BusinessService {
 
-    @DistributedLock(name = "doit", key = "f*k", expiredTime = 2, expiredTimeUnit = TimeUnit.SECONDS)
+    @DistributedLock(name = "doit", key = "f*k", waitTime = 1, expiredTime = 10, expiredTimeUnit = TimeUnit.SECONDS)
     public String doSomething() throws InterruptedException {
         int i = 1;
         do {
             Thread.sleep(1000);
             System.out.println("第" + i + "秒");
-        } while (++i < 60);
+        } while (++i < 10);
         return "finish";
     }
 
