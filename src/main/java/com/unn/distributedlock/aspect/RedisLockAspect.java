@@ -2,16 +2,17 @@ package com.unn.distributedlock.aspect;
 
 import com.unn.distributedlock.annotation.DistributedLock;
 import com.unn.distributedlock.core.RedisLockRegistry;
-import com.unn.distributedlock.handler.AcquireLockExceptionHandler;
-import com.unn.distributedlock.handler.AcquireLockFailedHandler;
-import com.unn.distributedlock.handler.AfterUnlockSuccessHandler;
-import com.unn.distributedlock.handler.BeforeLockHandlerHandler;
+import com.unn.distributedlock.event.AcquireLockExceptionEvent;
+import com.unn.distributedlock.event.AcquireLockFailedEvent;
+import com.unn.distributedlock.event.AfterUnlockSuccessEvent;
+import com.unn.distributedlock.event.BeforeLockEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
@@ -35,10 +36,7 @@ import java.util.function.Function;
 public class RedisLockAspect {
     private final RedisConnectionFactory redisConnectionFactory;
     private final Map<String, RedisLockRegistry> redisLockRegistryMap = new ConcurrentHashMap<>();
-    private final AcquireLockFailedHandler acquireLockFailedHandler;
-    private final AcquireLockExceptionHandler acquireLockExceptionHandler;
-    private final AfterUnlockSuccessHandler afterUnlockSuccessHandler;
-    private final BeforeLockHandlerHandler beforeLockHandlerHandler;
+    private final ApplicationContext applicationContext;
 
 
     @Around(value = "@annotation(distributedLock)")
@@ -49,7 +47,9 @@ public class RedisLockAspect {
                 .filter(r -> r);
         if (!lockedOp.isPresent()) {
             log.info("Failed to lock mutex at " + distributedLock.key());
-            acquireLockFailedHandler.handler(joinPoint.getArgs());
+            applicationContext.publishEvent(AcquireLockFailedEvent.builder()
+                    .args(joinPoint.getArgs())
+                    .build());
             return null;
         }
         log.debug("------加锁成功,开始处理业务逻辑------");
@@ -61,17 +61,27 @@ public class RedisLockAspect {
 
     @Before(value = "@annotation(distributedLock)")
     public void before(JoinPoint joinPoint, DistributedLock distributedLock) {
-        beforeLockHandlerHandler.handler(joinPoint.getArgs(), distributedLock);
+        applicationContext.publishEvent(BeforeLockEvent.builder()
+                .args(joinPoint.getArgs())
+                .distributedLock(distributedLock)
+                .build());
     }
 
     @AfterReturning(value = "@annotation(distributedLock)")
     public void afterReturning(JoinPoint joinPoint, DistributedLock distributedLock) {
-        afterUnlockSuccessHandler.handler(joinPoint.getArgs(), distributedLock);
+        applicationContext.publishEvent(AfterUnlockSuccessEvent.builder()
+                .args(joinPoint.getArgs())
+                .distributedLock(distributedLock)
+                .build());
     }
 
     @AfterThrowing(value = "@annotation(distributedLock)", throwing = "ex")
     public void afterThrowing(JoinPoint joinPoint, DistributedLock distributedLock, Throwable ex) {
-        acquireLockExceptionHandler.handler(joinPoint.getArgs(), ex, distributedLock);
+        applicationContext.publishEvent(AcquireLockExceptionEvent.builder()
+                .args(joinPoint.getArgs())
+                .distributedLock(distributedLock)
+                .e(ex)
+                .build());
     }
 
 
