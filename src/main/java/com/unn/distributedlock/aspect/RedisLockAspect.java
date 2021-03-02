@@ -10,12 +10,9 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 
@@ -68,9 +65,9 @@ public class RedisLockAspect {
      */
     private Lock getLock(DistributedLock distributedLock) {
         RedisLockRegistry lockRegistry;
-        if (distributedLock.keepLease()){
+        if (distributedLock.keepLease()) {
             lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
-        }else {
+        } else {
             lockRegistry = redisLockRegistryUtil.getLockRegistryNoKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         }
         return lockRegistry
