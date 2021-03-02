@@ -1,6 +1,7 @@
 package com.unn.distributedlock.config;
 
 import com.unn.distributedlock.aspect.RedisLockAspect;
+import com.unn.distributedlock.util.RedisLockRegistryUtil;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
@@ -17,7 +18,7 @@ import org.springframework.integration.support.locks.ExpirableLockRegistry;
 @Configuration
 @ConditionalOnClass({StringRedisTemplate.class, ExpirableLockRegistry.class,})
 @AutoConfigureAfter(RedisAutoConfiguration.class)
-@Import({RedisLockAspect.class})
+@Import({RedisLockAspect.class, RedisLockRegistryUtil.class})
 public class RedisLockAutoConfiguration {
 
 }

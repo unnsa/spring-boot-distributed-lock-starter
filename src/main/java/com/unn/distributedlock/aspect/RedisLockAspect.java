@@ -2,6 +2,7 @@ package com.unn.distributedlock.aspect;
 
 import com.unn.distributedlock.annotation.DistributedLock;
 import com.unn.distributedlock.core.RedisLockRegistry;
+import com.unn.distributedlock.util.RedisLockRegistryUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
@@ -29,8 +30,7 @@ import java.util.function.Function;
 @Slf4j
 @RequiredArgsConstructor
 public class RedisLockAspect {
-    private final RedisConnectionFactory redisConnectionFactory;
-    private final Map<String, RedisLockRegistry> redisLockRegistryMap = new ConcurrentHashMap<>();
+    private final RedisLockRegistryUtil redisLockRegistryUtil;
 
 
     @Around(value = "@annotation(distributedLock)")
@@ -67,16 +67,13 @@ public class RedisLockAspect {
      * 获取锁
      */
     private Lock getLock(DistributedLock distributedLock) {
-        return Optional.ofNullable(redisLockRegistryMap.get(distributedLock.name()))
-                .orElseGet(() -> {
-                    RedisLockRegistry redisLockRegistry = new RedisLockRegistry(redisConnectionFactory,
-                            distributedLock.name(),
-                            distributedLock.expiredTime(),
-                            distributedLock.expiredTimeUnit(),
-                            distributedLock.keepLease());
-                    redisLockRegistryMap.put(distributedLock.name(), redisLockRegistry);
-                    return redisLockRegistry;
-                })
+        RedisLockRegistry lockRegistry;
+        if (distributedLock.keepLease()){
+            lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+        }else {
+            lockRegistry = redisLockRegistryUtil.getLockRegistryNoKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+        }
+        return lockRegistry
                 .obtain(distributedLock.key());
     }
 

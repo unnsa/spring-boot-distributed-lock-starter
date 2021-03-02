@@ -43,6 +43,8 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
     private final RedisScript<Boolean> nbReleaseLockScript;
 
+    private final RedisScript<Boolean> lockKeepLeaseScript;
+
     private final long expireAfter;
 
     /**
@@ -56,6 +58,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         obtainLockScript = new DefaultRedisScript<>(RedisLockScript.OBTAIN_LOCK_SCRIPT, Boolean.class);
         releaseLockScript = new DefaultRedisScript<>(RedisLockScript.RELEASE_LOCK_SCRIPT, Boolean.class);
         nbReleaseLockScript = new DefaultRedisScript<>(RedisLockScript.NB_RELEASE_LOCK_SCRIPT, Boolean.class);
+        lockKeepLeaseScript = new DefaultRedisScript<>(RedisLockScript.LOCK_KEEP_LEASE_SCRIPT, Boolean.class);
     }
 
     /**
@@ -306,6 +309,16 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
                     .isPresent();
         }
 
+        /**
+         * 锁续租
+         */
+        private boolean lockKeepLease() {
+            return Optional.ofNullable(redisTemplate.execute(lockKeepLeaseScript,
+                    Collections.singletonList(lockKey), String.valueOf(timeUtil.toMillis(expireAfter))))
+                    .filter(r -> r)
+                    .isPresent();
+        }
+
         @Override
         public void unlock() {
             if (!localLock.isHeldByCurrentThread()) {
@@ -371,7 +384,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
                         return;
                     }
                     watching = true;
-                    obtainLock();
+                    lockKeepLease();
                 } catch (final Throwable t) {
                     log.error("Fail to keeping lease with lock: {}.", lockKey);
                     tryCancelScheduling();
