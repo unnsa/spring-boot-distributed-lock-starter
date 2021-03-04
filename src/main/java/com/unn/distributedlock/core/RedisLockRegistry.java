@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 可重入分布式锁
+ *
  * @author yangjiyun
  */
 @Slf4j
@@ -340,6 +341,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
                     releaseLock();
                 }
                 tryCancelScheduling();
+                locks.remove(lockKey);
                 if (log.isDebugEnabled()) {
                     log.debug("Released lock; " + this);
                 }
