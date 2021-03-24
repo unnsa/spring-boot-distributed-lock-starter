@@ -155,6 +155,10 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
 
     @Data
     private final class DefaultRedisLock implements RedisLock {
+        /**
+         * 锁的name
+         */
+        private final String path;
 
         /**
          * 锁的key
@@ -180,6 +184,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         private volatile boolean watching = false;
 
         private DefaultRedisLock(String path) {
+            this.path = path;
             this.lockKey = constructLockKey(path);
         }
 
@@ -315,7 +320,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          */
         private boolean lockKeepLease() {
             return Optional.ofNullable(redisTemplate.execute(lockKeepLeaseScript,
-                    Collections.singletonList(lockKey), String.valueOf(timeUtil.toMillis(expireAfter))))
+                    Collections.singletonList(lockKey), clientId, String.valueOf(timeUtil.toMillis(expireAfter))))
                     .filter(r -> r)
                     .isPresent();
         }
@@ -341,7 +346,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
                     releaseLock();
                 }
                 tryCancelScheduling();
-                locks.remove(lockKey);
+                locks.remove(path);
                 if (log.isDebugEnabled()) {
                     log.debug("Released lock; " + this);
                 }

@@ -27,7 +27,7 @@ public @interface RedisLockScript {
     String LOCK_KEEP_LEASE_SCRIPT =
             "local lockClientId = redis.call('GET', KEYS[1])\n" +
                     "if lockClientId == ARGV[1] then\n" +
-                    "  redis.call('PEXPIRE', KEYS[1], ARGV[1])\n" +
+                    "  redis.call('PEXPIRE', KEYS[1], ARGV[2])\n" +
                     "  return true\n" +
                     "end\n" +
                     "return false";
