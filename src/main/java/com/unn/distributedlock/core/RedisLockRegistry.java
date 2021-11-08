@@ -81,7 +81,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param connectionFactory The connection factory.
      * @param registryKey       The key prefix for locks.
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
+    RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
         this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER, TimeUnit.MILLISECONDS, true);
     }
 
@@ -94,7 +94,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param timeUtil          The expiration time unit
      * @param keepLease         true: extend time,false : no
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
+     RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
@@ -154,7 +154,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     }
 
     @Data
-    private final class DefaultRedisLock implements RedisLock {
+    final class DefaultRedisLock implements RedisLock {
         /**
          * 锁的name
          */
@@ -300,7 +300,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          */
         private boolean releaseLock() {
             return Optional.ofNullable(redisTemplate.execute(releaseLockScript,
-                    Collections.singletonList(lockKey), clientId))
+                            Collections.singletonList(lockKey), clientId))
                     .filter(r -> r)
                     .isPresent();
         }
@@ -310,7 +310,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          */
         private boolean nbReleaseLock() {
             return Optional.ofNullable(redisTemplate.execute(nbReleaseLockScript,
-                    Collections.singletonList(lockKey), clientId))
+                            Collections.singletonList(lockKey), clientId))
                     .filter(r -> r)
                     .isPresent();
         }
@@ -320,7 +320,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
          */
         private boolean lockKeepLease() {
             return Optional.ofNullable(redisTemplate.execute(lockKeepLeaseScript,
-                    Collections.singletonList(lockKey), clientId, String.valueOf(timeUtil.toMillis(expireAfter))))
+                            Collections.singletonList(lockKey), clientId, String.valueOf(timeUtil.toMillis(expireAfter))))
                     .filter(r -> r)
                     .isPresent();
         }

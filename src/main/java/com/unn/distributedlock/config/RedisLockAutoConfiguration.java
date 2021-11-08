@@ -1,7 +1,7 @@
 package com.unn.distributedlock.config;
 
-import com.unn.distributedlock.aspect.RedisLockAspect;
-import com.unn.distributedlock.util.RedisLockRegistryUtil;
+import com.unn.distributedlock.core.RedisLockAspect;
+import com.unn.distributedlock.core.RedisLockRegistryUtil;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
