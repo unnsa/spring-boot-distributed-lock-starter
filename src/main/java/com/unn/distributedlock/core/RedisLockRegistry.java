@@ -300,7 +300,7 @@ final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
          */
         private boolean releaseLock() {
             return Optional.ofNullable(redisTemplate.execute(releaseLockScript,
-                    Collections.singletonList(lockKey), clientId))
+                            Collections.singletonList(lockKey), clientId))
                     .filter(r -> r)
                     .isPresent();
         }
@@ -310,7 +310,7 @@ final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
          */
         private boolean nbReleaseLock() {
             return Optional.ofNullable(redisTemplate.execute(nbReleaseLockScript,
-                    Collections.singletonList(lockKey), clientId))
+                            Collections.singletonList(lockKey), clientId))
                     .filter(r -> r)
                     .isPresent();
         }
@@ -320,7 +320,7 @@ final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
          */
         private boolean lockKeepLease() {
             return Optional.ofNullable(redisTemplate.execute(lockKeepLeaseScript,
-                    Collections.singletonList(lockKey), clientId, String.valueOf(timeUtil.toMillis(expireAfter))))
+                            Collections.singletonList(lockKey), clientId, String.valueOf(timeUtil.toMillis(expireAfter))))
                     .filter(r -> r)
                     .isPresent();
         }
