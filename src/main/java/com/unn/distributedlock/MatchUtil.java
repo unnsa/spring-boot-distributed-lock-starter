@@ -91,11 +91,11 @@ public class MatchUtil {
                 if ((o1.equals(c1) && o2.equals(c2) && o3.equals(c3))
                         || (o1 == __ && o2.equals(c2) && o3.equals(c3))
                         || (o1 == __ && o2 == __ && o3.equals(c3))
-                        || (o1 == __ && o2 == c2 && o3 == __)
+                        || (o1 == __ && o2.equals(c2) && o3 == __)
                         || (o1 == __ && o2 == __ && o3 == __)
-                        || (o1 == c1 && o2 == __ && o3 == c3)
-                        || (o1 == c1 && o2 == __ && o3 == __)
-                        || (o1 == c1 && o2 == c2 && o3 == __)
+                        || (o1.equals(c1) && o2 == __ && o3.equals(c3))
+                        || (o1.equals(c1) && o2 == __ && o3 == __)
+                        || (o1.equals(c1) && o2.equals(c2) && o3 == __)
                 ) {
                     return Optional.ofNullable(rList.get(i));
                 }
