@@ -37,6 +37,7 @@ public class MatchUtil {
         private final Map<Object, R> c2Map__ = new HashMap<>();
 
         public TwoConditionsBuilder<R> put(Object one, Object two, R r) {
+            checkParam(one, two, r);
             if (two == __)
                 c1Map__.put(one, r);
             if (one == __)
@@ -49,6 +50,7 @@ public class MatchUtil {
         }
 
         public Optional<R> build(Object one, Object two) {
+            checkParam(one, two);
             final R r2 = c2Map__.get(two);
             if (r2 != null) {
                 return Optional.of(r2);
@@ -59,6 +61,18 @@ public class MatchUtil {
             }
             return Optional.ofNullable(c1TwoC2Map.get(one))
                     .map(c2m -> c2m.get(two));
+        }
+    }
+
+
+    private static void checkParam(Object... objs) {
+        if (Objects.isNull(objs)) {
+            return;
+        }
+        for (Object obj : objs) {
+            if (Objects.isNull(obj)) {
+                throw new IllegalArgumentException("must not be null");
+            }
         }
     }
 
@@ -76,6 +90,7 @@ public class MatchUtil {
         private final List<R> rList = new ArrayList<>();
 
         public ThreeConditionsBuilder<R> put(Object c1, Object c2, Object c3, R r) {
+            checkParam(c1, c2, c3, r);
             condition1List.add(c1);
             condition2List.add(c2);
             condition3List.add(c3);
@@ -84,6 +99,7 @@ public class MatchUtil {
         }
 
         public Optional<R> build(Object c1, Object c2, Object c3) {
+            checkParam(c1, c2, c3);
             for (int i = 0; i < condition1List.size(); i++) {
                 Object o1 = condition1List.get(i);
                 Object o2 = condition2List.get(i);
