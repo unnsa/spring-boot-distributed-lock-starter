@@ -1,8 +1,6 @@
-package com.unn.distributedlock.aspect;
+package com.unn.distributedlock.core;
 
 import com.unn.distributedlock.annotation.DistributedLock;
-import com.unn.distributedlock.core.RedisLockRegistry;
-import com.unn.distributedlock.util.RedisLockRegistryUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
@@ -34,7 +32,7 @@ public class RedisLockAspect {
     public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
         Lock lock = getLock(distributedLock);
         var lockedOp = Optional.ofNullable(getLockOperate(distributedLock)
-                .apply(lock))
+                        .apply(lock))
                 .filter(r -> r);
         if (!lockedOp.isPresent()) {
             log.info("Failed to lock mutex at " + distributedLock.key());
@@ -68,7 +66,7 @@ public class RedisLockAspect {
         if (distributedLock.keepLease()) {
             lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         } else {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryNoKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+            lockRegistry = redisLockRegistryUtil.getLockRegistryNotKeepLease(distributedLock.name(), distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         }
         return lockRegistry
                 .obtain(distributedLock.key());

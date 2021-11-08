@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author yangjiyun
  */
 @Slf4j
-public final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
+final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
 
     private static final long DEFAULT_EXPIRE_AFTER = 60000L;
 
@@ -154,7 +154,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     }
 
     @Data
-    private final class DefaultRedisLock implements RedisLock {
+    final class DefaultRedisLock implements RedisLock {
         /**
          * 锁的name
          */

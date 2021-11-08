@@ -1,6 +1,5 @@
-package com.unn.distributedlock.util;
+package com.unn.distributedlock.core;
 
-import com.unn.distributedlock.core.RedisLockRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
@@ -36,9 +35,9 @@ public class RedisLockRegistryUtil {
                 });
     }
 
-    public RedisLockRegistry getLockRegistryNoKeepLease(String registryKey,
-                                                        long expireAfter,
-                                                        TimeUnit timeUtil) {
+    public RedisLockRegistry getLockRegistryNotKeepLease(String registryKey,
+                                                         long expireAfter,
+                                                         TimeUnit timeUtil) {
         String registryName = registryKey + "-doNotKeepLease";
         return Optional.ofNullable(redisLockRegistryMap.get(registryName))
                 .orElseGet(() -> {
@@ -77,10 +76,10 @@ public class RedisLockRegistryUtil {
      * @param lockKey     锁的key
      * @return Lock
      */
-    public Lock getLockNoKeepLease(String registryKey,
+    public Lock getLockNotKeepLease(String registryKey,
                                    long expireAfter,
                                    TimeUnit timeUtil,
                                    String lockKey) {
-        return getLockRegistryNoKeepLease(registryKey, expireAfter, timeUtil).obtain(lockKey);
+        return getLockRegistryNotKeepLease(registryKey, expireAfter, timeUtil).obtain(lockKey);
     }
 }

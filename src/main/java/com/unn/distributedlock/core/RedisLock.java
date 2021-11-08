@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author yangjiyun
  */
-public interface RedisLock extends Lock {
+interface RedisLock extends Lock {
 
 
     /**
