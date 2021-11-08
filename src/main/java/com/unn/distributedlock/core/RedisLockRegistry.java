@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author yangjiyun
  */
 @Slf4j
-final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
+public final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
 
     private static final long DEFAULT_EXPIRE_AFTER = 60000L;
 
@@ -81,7 +81,7 @@ final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
      * @param connectionFactory The connection factory.
      * @param registryKey       The key prefix for locks.
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
+    RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey) {
         this(connectionFactory, registryKey, DEFAULT_EXPIRE_AFTER, TimeUnit.MILLISECONDS, true);
     }
 
@@ -94,7 +94,7 @@ final class RedisLockRegistry implements ExpirableLockRegistry, DisposableBean {
      * @param timeUtil          The expiration time unit
      * @param keepLease         true: extend time,false : no
      */
-    public RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
+     RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
