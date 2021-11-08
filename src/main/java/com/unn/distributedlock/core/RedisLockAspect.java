@@ -50,10 +50,10 @@ public class RedisLockAspect {
             log.info("Failed to lock mutex at " + distributedLock.key());
             return null;
         }
-        log.debug("------加锁成功,开始处理业务逻辑------");
+        log.debug("------lock success------");
         Object proceed = joinPoint.proceed();
         lock.unlock();
-        log.debug("------业务逻辑处理完毕，释放锁------");
+        log.debug("------release lock success------");
         return proceed;
     }
 
