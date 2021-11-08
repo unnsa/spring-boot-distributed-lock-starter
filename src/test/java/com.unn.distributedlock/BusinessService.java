@@ -19,6 +19,16 @@ public class BusinessService {
         return "finish";
     }
 
+    @DistributedLock(name = "${name}", key = "${id}", waitTime = 1, expiredTime = 10, expiredTimeUnit = TimeUnit.SECONDS)
+    public String doSomething(String name, String id) throws InterruptedException {
+        int i = 1;
+        do {
+            Thread.sleep(1000);
+            System.out.println("第" + i + "秒");
+        } while (++i < 10);
+        return "finish";
+    }
+
     @DistributedLock(name = "doit", key = "f*k", expiredTime = 30, expiredTimeUnit = TimeUnit.SECONDS)
     public String doSomethingReentrant(int i) throws InterruptedException {
         System.out.println("第" + i + "次");
