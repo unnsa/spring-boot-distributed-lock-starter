@@ -17,7 +17,7 @@ public class MatchUtil {
         return new ThreeConditionsBuilder<>();
     }
 
-    public static <R> MultipleConditionsBuilder<R> moreConditionsBuilder() {
+    public static <R> MultipleConditionsBuilder<R> multipleConditionsBuilder() {
         return new MultipleConditionsBuilder<>();
     }
 
@@ -42,7 +42,7 @@ public class MatchUtil {
 //                .put(() -> System.out.println("__.d"), __, "b")
 //                .build("d", "b")
 //                .ifPresent(Runnable::run);
-        MatchUtil.<Runnable>moreConditionsBuilder()
+        MatchUtil.<Runnable>multipleConditionsBuilder()
                 .put(() -> System.out.println("a,b,c"), "a", "b", "c", "d")
                 .put(() -> System.out.println("a,c,b"), "a", "c", "b", "d")
                 .put(() -> System.out.println("__,b,c"), __, "b", "c", __)
