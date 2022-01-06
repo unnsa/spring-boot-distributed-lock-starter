@@ -17,8 +17,8 @@ public class MatchUtil {
         return new ThreeConditionsBuilder<>();
     }
 
-    public static <R> MoreConditionsBuilder<R> moreConditionsBuilder() {
-        return new MoreConditionsBuilder<>();
+    public static <R> MultipleConditionsBuilder<R> moreConditionsBuilder() {
+        return new MultipleConditionsBuilder<>();
     }
 
 
@@ -46,43 +46,10 @@ public class MatchUtil {
                 .put(() -> System.out.println("a,b,c"), "a", "b", "c", "d")
                 .put(() -> System.out.println("a,c,b"), "a", "c", "b", "d")
                 .put(() -> System.out.println("__,b,c"), __, "b", "c", __)
-                .put(() -> System.out.println("others"), __, __, __,__)
-                .build("x", "y", "c","a")
+                .put(() -> System.out.println("others"), __, __, __, __)
+                .build("x", "y", "c", "a")
                 .ifPresent(Runnable::run);
     }
-
-//    public static class TwoConditionsBuilder<R> {
-//        private final Map<Object, Map<Object, R>> c1TwoC2Map = new HashMap<>();
-//        private final Map<Object, R> c1Map__ = new HashMap<>();
-//        private final Map<Object, R> c2Map__ = new HashMap<>();
-//
-//        public TwoConditionsBuilder<R> put(Object one, Object two, R r) {
-//            checkParam(one, two, r);
-//            if (two == __)
-//                c1Map__.put(one, r);
-//            if (one == __)
-//                c2Map__.put(two, r);
-//            final Map<Object, R> c2Map = Optional.ofNullable(c1TwoC2Map.get(one))
-//                    .orElseGet(HashMap::new);
-//            c2Map.put(two, r);
-//            c1TwoC2Map.put(one, c2Map);
-//            return this;
-//        }
-//
-//        public Optional<R> build(Object one, Object two) {
-//            checkParam(one, two);
-//            final R r2 = c2Map__.get(two);
-//            if (r2 != null) {
-//                return Optional.of(r2);
-//            }
-//            final R r1 = c1Map__.get(one);
-//            if (r1 != null) {
-//                return Optional.of(r1);
-//            }
-//            return Optional.ofNullable(c1TwoC2Map.get(one))
-//                    .map(c2m -> c2m.get(two));
-//        }
-//    }
 
 
     private static void checkParam(Object... objs) {
@@ -173,11 +140,11 @@ public class MatchUtil {
     }
 
 
-    public static class MoreConditionsBuilder<R> {
+    public static class MultipleConditionsBuilder<R> {
         private final List<R> rList = new ArrayList<>();
         private final List<List<Object>> conditionsList = new ArrayList<>();
 
-        public MoreConditionsBuilder<R> put(R r, Object... conditions) {
+        public MultipleConditionsBuilder<R> put(R r, Object... conditions) {
             checkParam(r, conditions);
             checkParam(conditions);
             initConditionsList(conditions);
