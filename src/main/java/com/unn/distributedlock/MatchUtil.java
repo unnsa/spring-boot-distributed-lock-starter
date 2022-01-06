@@ -17,14 +17,18 @@ public class MatchUtil {
         return new ThreeConditionsBuilder<>();
     }
 
+    public static <R> MoreConditionsBuilder<R> moreConditionsBuilder() {
+        return new MoreConditionsBuilder<>();
+    }
+
 
     public static void main(String[] args) {
-        MatchUtil.<Runnable>twoConditionsBuilder()
-                .put("a", "b", () -> System.out.println("a,b"))
-                .put("a", "c", () -> System.out.println("a,c"))
-                .put(__, "b", () -> System.out.println("__.d"))
-                .build("a", "c")
-                .ifPresent(Runnable::run);
+//        MatchUtil.<Runnable>twoConditionsBuilder()
+//                .put("a", "b", () -> System.out.println("a,b"))
+//                .put("a", "c", () -> System.out.println("a,c"))
+//                .put(__, "b", () -> System.out.println("__.d"))
+//                .build("a", "c")
+//                .ifPresent(Runnable::run);
 //        MatchUtil.<Runnable>threeConditionsBuilder()
 //                .put("a", "b", "c", () -> System.out.println("a,b,c"))
 //                .put("a", "c", "b", () -> System.out.println("a,c,b"))
@@ -32,6 +36,19 @@ public class MatchUtil {
 //                .put(__, __, __, () -> System.out.println("others"))
 //                .build("a", "b", "c")
 //                .ifPresent(Runnable::run);
+//        MatchUtil.<Runnable>moreConditionsBuilder()
+//                .put(() -> System.out.println("a,b"), "a", "b")
+//                .put(() -> System.out.println("a,c"), "a", "c")
+//                .put(() -> System.out.println("__.d"), __, "b")
+//                .build("d", "b")
+//                .ifPresent(Runnable::run);
+        MatchUtil.<Runnable>moreConditionsBuilder()
+                .put(() -> System.out.println("a,b,c"), "a", "b", "c", "d")
+                .put(() -> System.out.println("a,c,b"), "a", "c", "b", "d")
+                .put(() -> System.out.println("__,b,c"), __, "b", "c", __)
+                .put(() -> System.out.println("others"), __, __, __,__)
+                .build("x", "y", "c","a")
+                .ifPresent(Runnable::run);
     }
 
 //    public static class TwoConditionsBuilder<R> {
@@ -155,4 +172,51 @@ public class MatchUtil {
 
     }
 
+
+    public static class MoreConditionsBuilder<R> {
+        private final List<R> rList = new ArrayList<>();
+        private final List<List<Object>> conditionsList = new ArrayList<>();
+
+        public MoreConditionsBuilder<R> put(R r, Object... conditions) {
+            checkParam(r, conditions);
+            checkParam(conditions);
+            initConditionsList(conditions);
+            for (int i = 0; i < conditions.length; i++) {
+                conditionsList.get(i).add(conditions[i]);
+            }
+            rList.add(r);
+            return this;
+        }
+
+        private void initConditionsList(Object[] conditions) {
+            if (conditionsList.size() < 1) {
+                for (int i = 0; i < conditions.length; i++)
+                    conditionsList.add(new ArrayList<>());
+            }
+            checkArgsLength(conditions);
+        }
+
+        private void checkArgsLength(Object[] conditions) {
+            if (conditionsList.size() != conditions.length) {
+                throw new IllegalArgumentException("conditions 参数个数前后不一致");
+            }
+        }
+
+        public Optional<R> build(Object... conditions) {
+            checkParam(conditions);
+            checkArgsLength(conditions);
+            for (int i = 0; i < conditionsList.get(0).size(); i++) {
+                for (int j = 0; j < conditionsList.size(); j++) {
+                    if (!(conditionsList.get(j).get(i).equals(conditions[j]) || conditionsList.get(j).get(i) == __))
+                        break;
+                    if (j == conditions.length - 1) {
+                        return Optional.ofNullable(rList.get(i));
+                    }
+                }
+            }
+
+            return Optional.empty();
+        }
+
+    }
 }
