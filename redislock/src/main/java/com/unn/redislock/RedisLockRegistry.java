@@ -1,4 +1,4 @@
-package com.unn.distributedlock.core;
+package com.unn.redislock;
 
 import com.unn.distributedlock.script.RedisLockScript;
 import lombok.Data;
@@ -30,7 +30,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     private static final long DEFAULT_EXPIRE_AFTER = 60000L;
 
 
-    private final Map<String, DefaultRedisLock> locks = new ConcurrentHashMap<>();
+    private final Map<String, DefaultDistributeLock> locks = new ConcurrentHashMap<>();
 
     private final String clientId = UUID.randomUUID().toString();
 
@@ -124,7 +124,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     @Override
     public Lock obtain(Object lockKey) {
         Assert.isInstanceOf(String.class, lockKey);
-        return locks.computeIfAbsent((String) lockKey, DefaultRedisLock::new);
+        return locks.computeIfAbsent((String) lockKey, DefaultDistributeLock::new);
     }
 
     /**
@@ -135,11 +135,11 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      */
     @Override
     public void expireUnusedOlderThan(long age) {
-        Iterator<Map.Entry<String, DefaultRedisLock>> iterator = locks.entrySet().iterator();
+        Iterator<Map.Entry<String, DefaultDistributeLock>> iterator = locks.entrySet().iterator();
         long now = System.currentTimeMillis();
         while (iterator.hasNext()) {
-            Map.Entry<String, DefaultRedisLock> entry = iterator.next();
-            DefaultRedisLock lock = entry.getValue();
+            Map.Entry<String, DefaultDistributeLock> entry = iterator.next();
+            DefaultDistributeLock lock = entry.getValue();
             if (now - lock.getLockedAt() > age && !lock.isAcquiredInThisProcess()) {
                 iterator.remove();
             }
@@ -154,7 +154,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     }
 
     @Data
-    final class DefaultRedisLock implements RedisLock {
+    final class DefaultDistributeLock implements DistributeLock {
         /**
          * 锁的name
          */
@@ -183,7 +183,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         private volatile boolean mayCancelIfRunning = false;
         private volatile boolean watching = false;
 
-        private DefaultRedisLock(String path) {
+        private DefaultDistributeLock(String path) {
             this.path = path;
             this.lockKey = constructLockKey(path);
         }

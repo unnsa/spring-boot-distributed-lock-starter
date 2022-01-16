@@ -12,7 +12,7 @@ import java.util.concurrent.locks.Lock;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = RedisLockTestApplication.class)
-public class RedisLockTest {
+public class DistributeLockTest {
     @Autowired
     private BusinessService businessService;
     @Autowired

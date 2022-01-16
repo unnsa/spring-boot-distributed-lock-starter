@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 @Order(0)
 @Slf4j
 @RequiredArgsConstructor
-public class RedisLockAspect {
+public class DistributeLockAspect {
     private final RedisLockRegistryUtil redisLockRegistryUtil;
     private static final String PARAMETER_EXPRESSION = "\\$\\{(.*?)\\}";
     private static final Pattern PARAMETER_PATTERN = Pattern.compile(PARAMETER_EXPRESSION);

@@ -1,4 +1,4 @@
-package com.unn.distributedlock.core;
+package com.unn.redislock;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
