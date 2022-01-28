@@ -96,6 +96,7 @@ public class DistributeLockAspect {
         String lockKey = lockKeyOp
                 .orElse(distributedLock.key());
         ServiceLoader<LockRegistry> load = ServiceLoader.load(LockRegistry.class);
+        for (l)
         return lockRegistry
                 .obtain(lockKey);
     }
