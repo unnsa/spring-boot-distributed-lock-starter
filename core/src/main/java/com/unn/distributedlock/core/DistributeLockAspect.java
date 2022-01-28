@@ -9,9 +9,11 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.springframework.core.annotation.Order;
+import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -28,7 +30,6 @@ import java.util.regex.Pattern;
 @Slf4j
 @RequiredArgsConstructor
 public class DistributeLockAspect {
-    private final RedisLockRegistryUtil redisLockRegistryUtil;
     private static final String PARAMETER_EXPRESSION = "\\$\\{(.*?)\\}";
     private static final Pattern PARAMETER_PATTERN = Pattern.compile(PARAMETER_EXPRESSION);
 
@@ -74,7 +75,6 @@ public class DistributeLockAspect {
      * 获取锁
      */
     private Lock getLock(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) {
-        RedisLockRegistry lockRegistry;
         String[] parameterNames = ((CodeSignature) joinPoint.getSignature()).getParameterNames();
         Class<?>[] parameterTypes = ((CodeSignature) joinPoint.getSignature()).getParameterTypes();
         Object[] args = joinPoint.getArgs();
@@ -93,15 +93,9 @@ public class DistributeLockAspect {
                 lockKeyOp = Optional.ofNullable((String) args[i]);
             }
         }
-        String registryKey = registryKeyOp
-                .orElse(distributedLock.name());
         String lockKey = lockKeyOp
                 .orElse(distributedLock.key());
-        if (distributedLock.keepLease()) {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
-        } else {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryNotKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
-        }
+        ServiceLoader<LockRegistry> load = ServiceLoader.load(LockRegistry.class);
         return lockRegistry
                 .obtain(lockKey);
     }

@@ -1,4 +1,4 @@
-package com.unn.distributedlock.config;
+package com.unn.redislock.config;
 
 import com.unn.distributedlock.core.DistributeLockAspect;
 import com.unn.distributedlock.core.RedisLockRegistryUtil;

@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.unn.distributedlock.config.RedisLockAutoConfiguration
+com.unn.redislock.config.RedisLockAutoConfiguration

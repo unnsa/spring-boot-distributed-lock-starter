@@ -1,6 +1,7 @@
 package com.unn.redislock;
 
-import com.unn.distributedlock.script.RedisLockScript;
+import com.unn.distributedlock.core.DistributeLock;
+import com.unn.redislock.script.RedisLockScript;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;

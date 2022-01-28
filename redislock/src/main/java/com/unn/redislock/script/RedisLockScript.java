@@ -1,4 +1,4 @@
-package com.unn.distributedlock.script;
+package com.unn.redislock.script;
 
 /**
  * redis脚本
