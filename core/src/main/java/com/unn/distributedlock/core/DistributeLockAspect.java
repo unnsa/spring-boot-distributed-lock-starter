@@ -3,7 +3,6 @@ package com.unn.distributedlock.core;
 import com.unn.distributedlock.annotation.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -96,9 +95,11 @@ public class DistributeLockAspect {
         String lockKey = lockKeyOp
                 .orElse(distributedLock.key());
         ServiceLoader<LockRegistry> load = ServiceLoader.load(LockRegistry.class);
-        for (l)
-        return lockRegistry
-                .obtain(lockKey);
+        return load.stream()
+                .findFirst()
+                .map(ServiceLoader.Provider::get)
+                .map(lr -> lr.obtain(lockKey))
+                .orElse(null);
     }
 
     /**
