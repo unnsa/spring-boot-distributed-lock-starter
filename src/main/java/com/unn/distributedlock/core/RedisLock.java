@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author yangjiyun
  */
-interface RedisLock extends Lock {
+public interface RedisLock extends Lock {
 
 
     /**
@@ -17,4 +17,16 @@ interface RedisLock extends Lock {
     default Condition newCondition() {
         throw new UnsupportedOperationException("Conditions are not supported");
     }
+
+    /**
+     * 获取锁的名字
+     * @return 锁的名字 lockName
+     */
+    String getLockName();
+
+    /**
+     * 获取锁的key
+     * @return 锁的key    registryKey:lockName
+     */
+    String getLockKey();
 }

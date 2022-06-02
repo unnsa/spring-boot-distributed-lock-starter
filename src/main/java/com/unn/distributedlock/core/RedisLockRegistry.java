@@ -94,7 +94,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param timeUtil          The expiration time unit
      * @param keepLease         true: extend time,false : no
      */
-     RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
+    RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
@@ -192,6 +192,15 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
             return RedisLockRegistry.this.registryKey + ":" + path;
         }
 
+        @Override
+        public String getLockKey() {
+            return this.lockKey;
+        }
+
+        @Override
+        public String getLockName() {
+            return this.path;
+        }
 
         @Override
         public void lock() {
