@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class BusinessService {
 
-    @DistributedLock(name = "doit", key = "f*k", waitTime = 1, expiredTime = 10, expiredTimeUnit = TimeUnit.SECONDS)
+    @DistributedLock(registryKey = "doit", lockKey = "f*k", waitTime = 1, expiredTime = 10, expiredTimeUnit = TimeUnit.SECONDS)
     public String doSomething() throws InterruptedException {
         int i = 1;
         do {
@@ -19,7 +19,7 @@ public class BusinessService {
         return "finish";
     }
 
-    @DistributedLock(name = "${name}", key = "${id}", waitTime = 1, expiredTime = 10, expiredTimeUnit = TimeUnit.SECONDS)
+    @DistributedLock(registryKey = "${name}", lockKey = "${id}", waitTime = 1, expiredTime = 10, expiredTimeUnit = TimeUnit.SECONDS)
     public String doSomething(String name, String id) throws InterruptedException {
         int i = 1;
         do {
@@ -29,7 +29,7 @@ public class BusinessService {
         return "finish";
     }
 
-    @DistributedLock(name = "doit", key = "f*k", expiredTime = 30, expiredTimeUnit = TimeUnit.SECONDS)
+    @DistributedLock(registryKey = "doit", lockKey = "f*k", expiredTime = 30, expiredTimeUnit = TimeUnit.SECONDS)
     public String doSomethingReentrant(int i) throws InterruptedException {
         System.out.println("第" + i + "次");
         if (i < 0) {

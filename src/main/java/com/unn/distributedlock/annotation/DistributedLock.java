@@ -16,14 +16,14 @@ import java.util.concurrent.TimeUnit;
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface DistributedLock {
     /**
-     * 锁的名字
+     * 锁注册器的key
      */
-    String name();
+    String registryKey();
 
     /**
-     * 锁的业务key
+     * 锁的key
      */
-    String key();
+    String lockKey();
 
     /**
      * 锁的过期时间

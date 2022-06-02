@@ -59,8 +59,8 @@ public class RedisLockAspect {
         String[] parameterNames = ((CodeSignature) joinPoint.getSignature()).getParameterNames();
         Class<?>[] parameterTypes = ((CodeSignature) joinPoint.getSignature()).getParameterTypes();
         Object[] args = joinPoint.getArgs();
-        Optional<String> registryKeyOp = getParamName(distributedLock.name());
-        Optional<String> lockKeyOp = getParamName(distributedLock.key());
+        Optional<String> registryKeyOp = getParamName(distributedLock.registryKey());
+        Optional<String> lockKeyOp = getParamName(distributedLock.lockKey());
         for (int i = 0; i < parameterNames.length; i++) {
             if (registryKeyOp
                     .filter(parameterNames[i]::equals)
@@ -75,9 +75,9 @@ public class RedisLockAspect {
             }
         }
         String registryKey = registryKeyOp
-                .orElse(distributedLock.name());
+                .orElse(distributedLock.registryKey());
         String lockKey = lockKeyOp
-                .orElse(distributedLock.key());
+                .orElse(distributedLock.lockKey());
         if (distributedLock.keepLease()) {
             lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         } else {
