@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author yangjiyun
  */
-@Target(value = {ElementType.METHOD})
+@Target(value = {ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface DistributedLock {
     /**
