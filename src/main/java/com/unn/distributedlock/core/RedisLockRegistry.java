@@ -63,7 +63,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     }
 
     /**
-     * An {@link ExecutorService} to call {@link StringRedisTemplate#delete} in
+     * An {@link ExecutorService} to call removeLockKey() in
      * the separate thread when the current one is interrupted.
      */
     private Executor executor =
