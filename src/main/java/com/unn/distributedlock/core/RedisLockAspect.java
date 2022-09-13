@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Slf4j
 @RequiredArgsConstructor
 public class RedisLockAspect {
-    private final RedisLockRegistryUtil redisLockRegistryUtil;
+    private final RedisLockRegistryFactory redisLockRegistryFactory;
     private static final String PARAMETER_EXPRESSION = "\\$\\{(.*?)\\}";
     private static final Pattern PARAMETER_PATTERN = Pattern.compile(PARAMETER_EXPRESSION);
 
@@ -79,9 +79,9 @@ public class RedisLockAspect {
         String lockKey = lockKeyOp
                 .orElse(distributedLock.lockKey());
         if (distributedLock.keepLease()) {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+            lockRegistry = redisLockRegistryFactory.getLockRegistryAutoKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         } else {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryNotKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+            lockRegistry = redisLockRegistryFactory.getLockRegistryNotKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         }
         return lockRegistry
                 .obtain(lockKey);
