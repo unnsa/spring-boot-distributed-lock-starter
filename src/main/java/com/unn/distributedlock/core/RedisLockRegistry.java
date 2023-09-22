@@ -178,7 +178,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         /**
          * 看门狗，用来锁的续租
          */
-        private final ScheduledExecutorService watchdog = Executors.newSingleThreadScheduledExecutor();
+        private final ScheduledExecutorService watchdog;
         private volatile ScheduledFuture<?> watchdogFuture;
         private volatile boolean mayCancelIfRunning = false;
         private volatile boolean watching = false;
@@ -186,6 +186,11 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         private DefaultRedisLock(String path) {
             this.path = path;
             this.lockKey = constructLockKey(path);
+            if (keepLease) {
+                watchdog = Executors.newSingleThreadScheduledExecutor();
+            } else {
+                watchdog = null;
+            }
         }
 
         private String constructLockKey(String path) {
