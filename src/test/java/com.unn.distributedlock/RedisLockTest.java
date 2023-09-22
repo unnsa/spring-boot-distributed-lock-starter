@@ -1,6 +1,6 @@
 package com.unn.distributedlock;
 
-import com.unn.distributedlock.core.RedisLockRegistryUtil;
+import com.unn.distributedlock.core.RedisLockRegistryFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ public class RedisLockTest {
     @Autowired
     private BusinessService businessService;
     @Autowired
-    private RedisLockRegistryUtil redisLockRegistryUtil;
+    private RedisLockRegistryFactory redisLockRegistryFactory;
 
 
     @Test
@@ -39,7 +39,7 @@ public class RedisLockTest {
 
     @Test
     public void test2() throws InterruptedException {
-        Lock lock = redisLockRegistryUtil.getLockAutoKeepLease("lockName", 10, TimeUnit.SECONDS, "lockKey");
+        Lock lock = redisLockRegistryFactory.getLockAutoKeepLease("lockName", 10, TimeUnit.SECONDS, "lockKey");
         if (!lock.tryLock(10, TimeUnit.SECONDS)) {
             //do something
             return;

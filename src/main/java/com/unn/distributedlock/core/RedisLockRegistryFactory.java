@@ -15,7 +15,7 @@ import java.util.concurrent.locks.Lock;
  */
 @Component
 @RequiredArgsConstructor
-public class RedisLockRegistryUtil {
+public class RedisLockRegistryFactory {
     private final RedisConnectionFactory redisConnectionFactory;
     private final Map<String, RedisLockRegistry> redisLockRegistryMap = new ConcurrentHashMap<>();
 

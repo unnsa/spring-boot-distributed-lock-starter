@@ -1,19 +1,19 @@
 package com.unn.distributedlock.core;
 
 import com.unn.distributedlock.annotation.DistributedLock;
+import com.unn.distributedlock.util.LockUtil;
+import com.unn.distributedlock.util.SupplierThrowable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Slf4j
 @RequiredArgsConstructor
 public class RedisLockAspect {
-    private final RedisLockRegistryUtil redisLockRegistryUtil;
+    private final RedisLockRegistryFactory redisLockRegistryFactory;
     private static final String PARAMETER_EXPRESSION = "\\$\\{(.*?)\\}";
     private static final Pattern PARAMETER_PATTERN = Pattern.compile(PARAMETER_EXPRESSION);
 
@@ -41,32 +41,13 @@ public class RedisLockAspect {
 
 
     @Around(value = "@annotation(distributedLock)")
-    public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
+    public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) {
         Lock lock = getLock(joinPoint, distributedLock);
-        var lockedOp = Optional.ofNullable(getLockOperate(distributedLock)
-                        .apply(lock))
-                .filter(r -> r);
-        if (!lockedOp.isPresent()) {
-            log.info("Failed to lock mutex at " + distributedLock.key());
-            return null;
+        if (distributedLock.waitTime() > 0) {
+            return LockUtil.executeWhenGetLock(lock, distributedLock.waitTime(), distributedLock.waitTimeUnit(), (SupplierThrowable<Object>) joinPoint::proceed);
+        } else {
+            return LockUtil.executeWhenGetLock(lock, (SupplierThrowable<Object>) joinPoint::proceed);
         }
-        log.debug("------lock success------");
-        Object proceed = joinPoint.proceed();
-        lock.unlock();
-        log.debug("------release lock success------");
-        return proceed;
-    }
-
-    @Before(value = "@annotation(distributedLock)")
-    public void before(JoinPoint joinPoint, DistributedLock distributedLock) {
-    }
-
-    @AfterReturning(value = "@annotation(distributedLock)")
-    public void afterReturning(JoinPoint joinPoint, DistributedLock distributedLock) {
-    }
-
-    @AfterThrowing(value = "@annotation(distributedLock)", throwing = "ex")
-    public void afterThrowing(JoinPoint joinPoint, DistributedLock distributedLock, Throwable ex) {
     }
 
 
@@ -78,8 +59,8 @@ public class RedisLockAspect {
         String[] parameterNames = ((CodeSignature) joinPoint.getSignature()).getParameterNames();
         Class<?>[] parameterTypes = ((CodeSignature) joinPoint.getSignature()).getParameterTypes();
         Object[] args = joinPoint.getArgs();
-        Optional<String> registryKeyOp = getParamName(distributedLock.name());
-        Optional<String> lockKeyOp = getParamName(distributedLock.key());
+        Optional<String> registryKeyOp = getParamName(distributedLock.registryKey());
+        Optional<String> lockKeyOp = getParamName(distributedLock.lockKey());
         for (int i = 0; i < parameterNames.length; i++) {
             if (registryKeyOp
                     .filter(parameterNames[i]::equals)
@@ -94,36 +75,15 @@ public class RedisLockAspect {
             }
         }
         String registryKey = registryKeyOp
-                .orElse(distributedLock.name());
+                .orElse(distributedLock.registryKey());
         String lockKey = lockKeyOp
-                .orElse(distributedLock.key());
+                .orElse(distributedLock.lockKey());
         if (distributedLock.keepLease()) {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryAutoKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+            lockRegistry = redisLockRegistryFactory.getLockRegistryAutoKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         } else {
-            lockRegistry = redisLockRegistryUtil.getLockRegistryNotKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
+            lockRegistry = redisLockRegistryFactory.getLockRegistryNotKeepLease(registryKey, distributedLock.expiredTime(), distributedLock.expiredTimeUnit());
         }
         return lockRegistry
                 .obtain(lockKey);
     }
-
-    /**
-     * 获取获取锁的方式
-     * 等待时间大于0 用tryLock(long time, TimeUnit unit)，否则用lock()
-     */
-    private Function<Lock, Boolean> getLockOperate(DistributedLock distributedLock) {
-        if (distributedLock.waitTime() > 0) {
-            return lock -> {
-                try {
-                    return lock.tryLock(distributedLock.waitTime(), distributedLock.waitTimeUnit());
-                } catch (InterruptedException ignore) {
-                    return false;
-                }
-            };
-        }
-        return lock -> {
-            lock.lock();
-            return true;
-        };
-    }
-
 }

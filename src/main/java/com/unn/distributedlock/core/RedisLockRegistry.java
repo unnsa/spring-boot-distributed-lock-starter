@@ -63,7 +63,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
     }
 
     /**
-     * An {@link ExecutorService} to call {@link StringRedisTemplate#delete} in
+     * An {@link ExecutorService} to call removeLockKey() in
      * the separate thread when the current one is interrupted.
      */
     private Executor executor =
@@ -94,7 +94,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
      * @param timeUtil          The expiration time unit
      * @param keepLease         true: extend time,false : no
      */
-     RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
+    RedisLockRegistry(RedisConnectionFactory connectionFactory, String registryKey, long expireAfter, TimeUnit timeUtil, boolean keepLease) {
         Assert.notNull(connectionFactory, "'connectionFactory' cannot be null");
         Assert.notNull(registryKey, "'registryKey' cannot be null");
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
@@ -178,7 +178,7 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         /**
          * 看门狗，用来锁的续租
          */
-        private final ScheduledExecutorService watchdog = Executors.newSingleThreadScheduledExecutor();
+        private final ScheduledExecutorService watchdog;
         private volatile ScheduledFuture<?> watchdogFuture;
         private volatile boolean mayCancelIfRunning = false;
         private volatile boolean watching = false;
@@ -186,12 +186,26 @@ public final class RedisLockRegistry implements ExpirableLockRegistry, Disposabl
         private DefaultRedisLock(String path) {
             this.path = path;
             this.lockKey = constructLockKey(path);
+            if (keepLease) {
+                watchdog = Executors.newSingleThreadScheduledExecutor();
+            } else {
+                watchdog = null;
+            }
         }
 
         private String constructLockKey(String path) {
             return RedisLockRegistry.this.registryKey + ":" + path;
         }
 
+        @Override
+        public String getLockKey() {
+            return this.lockKey;
+        }
+
+        @Override
+        public String getLockName() {
+            return this.path;
+        }
 
         @Override
         public void lock() {
